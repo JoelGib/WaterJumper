@@ -66,10 +66,10 @@ public class Player : MonoBehaviour
     }
 
     // Update is called once per frame
-    void LateUpdate()
+    void FixedUpdate()
     {
         onPlayerHold();
-        RotatePlayer(rb.velocity.y);
+        // RotatePlayer(rb.velocity.y);
         // Debug.Log("Velocity: "+rb.velocity);
         // if(rb.transform.position.y < -4){
         //         transform.Rotate(Vector3.up, -playerRotationRate * Time.deltaTime);

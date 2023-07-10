@@ -9,13 +9,15 @@ public class ObjectSpawner : MonoBehaviour
     private List<string> ObjectTags;
     public Vector2 spawnDistance;
     [SerializeField]private float spawnRate = 1f;
+    
     private bool canSpawn = true;
-    private string randomTag;
+    // private string randomTag;
 
     private void Start() {
         objectPooler = ObjectPooler.Instance;
         ObjectTags = objectPooler.getPooledObjectsTagList();
-        StartCoroutine(Spawner());
+        // StartCoroutine(Spawner());
+        InvokeRepeating("Spawn", spawnRate, spawnRate);
     }
     
     void FixedUpdate()
