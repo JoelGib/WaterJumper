@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Distortion
+  m_Shader: {fileID: -6465566751694194690, guid: 918215a4af8fa47b19480c6decab6e0e, type: 3}
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _SampleTexture2D_b2c80105b1d94a55bda97475ec7e8b50_Texture_1:
+        m_Texture: {fileID: 2800000, guid: d92a96c65843f4adbbf9cee7fde20521, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_ee78d01596d9478a9afbdf17f54aa8e3_Texture_1:
+        m_Texture: {fileID: 2800000, guid: 2d74b8a01e26d4b3da24b901607c0e5b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_f0cc2b18a6e7482ab767325626054b8b_Texture_1:
+        m_Texture: {fileID: 2800000, guid: d92a96c65843f4adbbf9cee7fde20521, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _WaterTexture:
+        m_Texture: {fileID: 2800000, guid: 4e6bb17185797495e99ed7431646963a, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _DistortionStrength: 0.81
+    - _Lines: 1
+    m_Colors:
+    - _Distortion1: {r: 0.34, g: 0.12, b: 0, a: 0}
+    - _Distortion2: {r: 0.13, g: 0.26, b: 0, a: 0}
+  m_BuildTextureStacks: []
