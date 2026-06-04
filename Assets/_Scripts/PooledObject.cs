@@ -18,8 +18,8 @@ public class PooledObject : MonoBehaviour, IPooledObject
 
     
 
-    // Update is called once per frame
-    void Update()
+    // FixedUpdate is called at fixed timestep for physics
+    void FixedUpdate()
     {
         UpdateSpeedX(new Vector2(-speed, 0));
 
@@ -29,7 +29,7 @@ public class PooledObject : MonoBehaviour, IPooledObject
     }
 
     private void UpdateSpeedX(Vector2 objSpeed){
-        rb2d.velocity = objSpeed;
+        rb2d.linearVelocity = objSpeed;
     }
 
     private void DestroyObject(){

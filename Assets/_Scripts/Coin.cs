@@ -10,12 +10,4 @@ public class Coin : MonoBehaviour
     void Start() {
         rb2d = GetComponent<Rigidbody2D>();
     }
-        
-
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }

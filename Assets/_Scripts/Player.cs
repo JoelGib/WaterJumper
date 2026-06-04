@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
@@ -8,26 +9,37 @@ public class Player : MonoBehaviour
     private Rigidbody2D rb;
     [SerializeField] private float holdDownForce = .5f;
     [SerializeField] private float playerRotationAngleZ = 45;
-    [SerializeField] private float playerRotationThreshold = .1f;
-    [SerializeField] private float minPlayerY = 3.5f;
-    [SerializeField] private float dampingFactor = 0.95f; // Adjust this value to control the damping effect
+    [SerializeField] private float rotationSpeed = 8f;      // how fast the tilt follows velocity
+    [SerializeField] private float minPlayerY = 5f;         // depth cap — can't dive below -minPlayerY
 
     private Vector3 originalScale;
     private GameManager gm;
+    private PlayerControls controls;
+    private bool isDiving;
+
+    private void Awake()
+    {
+        controls = new PlayerControls();
+
+        // Subscribe to Dive action events — no polling needed
+        controls.Gameplay.Dive.performed += _ => { isDiving = true;  Debug.Log("[DIVE] performed — isDiving = true");  };
+        controls.Gameplay.Dive.canceled  += _ => { isDiving = false; Debug.Log("[DIVE] canceled  — isDiving = false"); };
+    }
+
+    private void OnEnable()  => controls.Enable();
+    private void OnDisable() => controls.Disable();
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         gm = GameManager.Instance;
-        originalScale = transform.localScale; // Store the original scale of the player
+        originalScale = transform.localScale;
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.gameObject.CompareTag("Coin"))
-        {
             ObjectPooler.Instance.ReturnToPool(other.gameObject.tag, other.gameObject);
-        }
 
         if (other.gameObject.CompareTag("Enemy"))
         {
@@ -49,56 +61,23 @@ public class Player : MonoBehaviour
     private void PlayerDive()
     {
         if (rb.transform.position.y > -minPlayerY)
-        {
-            // Apply holdDownForce
-            rb.velocity += new Vector2(0, -holdDownForce);
-
-            // Apply damping to both x and y components of velocity
-            //rb.velocity *= dampingFactor * Time.deltaTime;
-        }
+            rb.linearVelocity += new Vector2(0, -holdDownForce);
     }
 
-    public void onPlayerHold()
+    private void RotatePlayer()
     {
-        if (Input.GetMouseButton(0))
-        {
-            PlayerDive();
-        }
-    }
+        // Normalise velocity.y to -1..1 using the max rotation angle as scale
+        // → tilts when moving, goes flat (0°) when velocity is near zero (settled)
+        float normalizedVel = Mathf.Clamp(rb.linearVelocity.y / playerRotationAngleZ, -1f, 1f);
+        float targetAngleZ  = normalizedVel * playerRotationAngleZ;
 
-    private void RotatePlayer(float height)
-    {
-        Vector3 eulerAngle = height > playerRotationThreshold ?
-                             new Vector3(0, 0, playerRotationAngleZ) :
-                             new Vector3(0, 0, -playerRotationAngleZ);
-
-        Quaternion targetRotation = Quaternion.Euler(eulerAngle);
-
-        // Adjust the interpolation factor to control the snappiness
-        float interpolationFactor = 10f; // Experiment with this value to achieve desired snappiness
-
-        // Use Quaternion.RotateTowards for a more immediate rotation change
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, Time.deltaTime * interpolationFactor);
+        Quaternion targetRotation = Quaternion.Euler(0f, 0f, targetAngleZ);
+        transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
     }
 
     void FixedUpdate()
     {
-        onPlayerHold();
-        RotatePlayer(rb.velocity.y * 2f);
-
-        // Debugging velocity
-        Debug.Log("Velocity: " + rb.velocity);
-        // Squish and stretch effect based on velocity
-        //float stretchFactor = 0.2f; // Adjust how much to stretch based on velocity
-        //float squashFactor = 0.2f; // Adjust how much to squash based on velocity
-
-        //Vector3 currentScale = originalScale;
-        //currentScale.x += Mathf.Abs(rb.velocity.x) * stretchFactor;
-        //currentScale.y -= Mathf.Abs(rb.velocity.y) * squashFactor;
-
-        //// Limit maximum squash to maintain aspect ratio
-        //currentScale.y = Mathf.Clamp(currentScale.y, originalScale.y * 0.8f, originalScale.y);
-
-        //transform.localScale = currentScale;
+        if (isDiving) PlayerDive();
+        RotatePlayer();
     }
 }

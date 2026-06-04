@@ -12,24 +12,10 @@ public class CoinSpawner : MonoBehaviour
 
     private void Start() {
         objectPooler = ObjectPooler.Instance;
-
-        StartCoroutine(Spawner());
+        InvokeRepeating(nameof(Spawn), spawnRate, spawnRate);
     }
-    
-    // void FixedUpdate()
-    // {
-    // //    objectPooler.SpawnFromPool("Enemy", transform.position, Quaternion.identity);
-    // }
 
     void Spawn(){
         objectPooler.SpawnFromPool("Coin", transform.position, Quaternion.identity);
-    }
-
-    IEnumerator Spawner(){
-        WaitForSeconds wait = new WaitForSeconds(spawnRate);
-        while(canSpawn){
-            yield return wait;
-            Spawn();
-        }
     }
 }

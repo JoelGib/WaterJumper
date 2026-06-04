@@ -17,11 +17,6 @@ public class GameManager : MonoBehaviour
     private void Awake() {
         Instance = this;
     }
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
 
     // public void PlayerHit(){
 
@@ -31,11 +26,5 @@ public class GameManager : MonoBehaviour
         if(checkAlive){
             SceneManager.LoadScene(SceneManager.GetActiveScene().name,  LoadSceneMode.Single);
         }
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }

@@ -1,0 +1,110 @@
+# WaterJumper (Working Title) - Master Game Design Document
+
+---
+
+# Part 1: GAMEPLAY DESIGN (The Player Experience)
+
+## 1. Concept & Theme
+**The Game:** An educational, arcade-style "Survivor-lite" played in landscape orientation. The game continuously scrolls like an endless runner.
+**The Vibe:** Biologically accurate marine warfare. You play as a marine mammal (Dolphin, Orca, etc.) fighting invasive species and pollution by recruiting real-world marine life as automated weapons. 
+**The Hook:** The mechanical tension between continuous forward motion and the need to maneuver vertically. The flow state relies on sharp, physical oscillation—holding the screen to execute a rapid dive to dodge, and releasing to rocket out of the water using buoyancy.
+
+## 2. Match Structure & Progression
+To maximize daily playability and long-term retention, the game uses a Hybrid Approach:
+*   **Campaign Mode (Finite Levels):** The primary progression track. Each level is 10-15 minutes long, with curated enemy formations, escalating difficulty, and ends with a specific Boss Fight. Beating a biome unlocks new animals for the draft pool.
+*   **The Abyss (Infinite Mode):** Unlocked after the Campaign. Pure survival with an infinite timer, escalating difficulty, and global leaderboards. Used purely for grinding currency and high scores.
+*   **Daily Bounties:** "Defeat 500 Lionfish" or "Survive 5 minutes in The Abyss" to drive daily logins even if a player is stuck on a hard Campaign level.
+
+## 3. Win & Death Conditions
+*   **Win Condition (Campaign):** Survive the stage timer (e.g., 10:00) AND defeat the final Boss that spawns at 10:00. Surviving the timer without killing the boss does not end the level; the boss must die.
+*   **Win Condition (Infinite Mode):** None. The goal is the highest time/score possible.
+*   **Death (Loss) Condition:** The player's HP reaches 0 (caused by physically colliding with a "Hazard" like an Enemy, Mine, or Pollution).
+    *   *Effect:* `GameSpeed` linearly drops to 0 over 1 second, resulting in a dramatic cinematic stop to all movement. The "Game Over" screen appears.
+    *   *Revive:* The player is offered exactly ONE ad-revive per run, restoring them to 50% HP.
+
+## 4. The Core Biological Loop
+1.  **Survive The Swim:** Enemies and hazards continuously stream from right to left horizontally.
+2.  **Feeding (Level Up):** Collecting "Krill Swarms" (XP) fills a progression bar.
+3.  **Symbiosis (The Draft):** When the Krill bar reaches MAX, the game enters a "Draft State":
+    *   `GameLoopData.GameSpeed.Value` is set to `0`. 
+    *   This instantly freezes all incoming fish, projectiles, and background elements, allowing the Draft UI to appear. (Crucially, this does *not* rely on `Time.timeScale`, avoiding physics bugs).
+    *   The player selects 1 of the 3 drafted animals.
+    *   `GameSpeed` is restored, instantly resuming the flow.
+4.  **The Climax:** As time goes on, the horde becomes denser, forcing the player to rely on their drafted allies to clear paths. 
+
+## 5. The Threat Ecology (Enemy Types)
+Enemies are marine hazards that force specific movement patterns.
+*   **The Fodder (Sardines):** Form massive vertical walls with only small gaps. The player must surgically thread the gap or use weapons to blast a hole.
+*   **The Seekers (Barracudas):** Fast, aggressive fish. They force the player to rapidly change vertical direction (the instant-dive).
+*   **The Benthic Bosses (Bottom Dwellers):** Sand-worms or tentacles that strike up if the player camps safely near the sea floor for too long.
+*   **The Aerial Bosses (Sky Hunters):** Pelicans or Harpoons that strike downwards if the player spends too much time air-borne.
+*   **Indestructibles (Pollution/Anchors):** Giant, slow-moving obstacles that weapons *cannot* destroy. The player MUST use their oscillation mastery to dodge these.
+
+## 6. The Arsenal (Allies & Abilities)
+The player does not shoot. The allies shoot automatically.
+*   **Archerfish (Linear Sniper):** Swims above the player. Spits a piercing line of water straight ahead. Good for breaking through Fodder walls.
+*   **Pistol Shrimp (Shotgun):** Hitches a ride on the player. Fires a massive, short-range sonic blast (cone) forward. Slow reload, massive damage.
+*   **Electric Eel (Area Denial Aura):** Orbits the player, creating a continuous damage radius. Ideal for catching enemies that spawn slightly off the player's direct path.
+*   **Depth Charge Turtle:** Drops explosive shells straight down, clearing enemies from the sea floor before the player needs to execute a deep dive.
+*   **Cuttlefish (Flashbang):** Periodically pulses hypnotic colors, temporarily stunning all enemies on screen (via temporarily slowing their individual `speed` multiplier).
+*   **Passive Traits:** Shark Denticles (Speed/Jump), Whale Blubber (Max HP), Remora Fish (Magnetism for XP).
+
+## 7. Economy & Currencies
+*   **Krill (In-Match XP):** Temporary glowing orbs. Fills the level-up bar.
+*   **Silver Scales (Soft Currency):** Dropped by larger enemies or found in clam shells. Kept upon death. Spent in the Main Menu to buy permanent passive upgrades.
+*   **Iridescent Pearls (Premium Currency):** Extremely rare. Dropped by bosses, awarded via achievements, or bought via IAP. Used to buy completely new Playable Mammals.
+
+---
+
+# Part 3: TECHNICAL DESIGN (The Developer Blueprint)
+
+## 1. Engine Architecture & Scene Management
+To ensure a scalable, decoupled architecture, the game strictly avoids the Singleton pattern, opting instead for **Reactive Programming (R3 / UniRx)** and **ScriptableObject-based State Management**.
+
+*   **Scene Structure (Multi-Scene Setup):**
+    1.  `00_Boot` or `01_MainMenu`: Handles initialization, UI, and Meta-progression shops. Runs persistently.
+    2.  `02_CoreGameplay`: Contains the Player, Environment (Water), and Spawner logical structures.
+    *   *Why?* Keeps memory clean. Core UI and Game Logic don't tightly couple to Main Menu elements.
+*   **The ScriptableObject Event Architecture:**
+    Instead of singletons referencing each other (e.g., [Player](file:///e:/Github/WaterJumper/Assets/_Scripts/Player.cs#5-103) calling `GameManager.Instance`), systems communicate via ScriptableObjects.
+    *   `GameLoopData` (ScriptableObject) acts as the central data container holding cross-scene variables (e.g., `GameSpeed`, `CurrentScore`).
+    *   `GameEvents` (ScriptableObject) holds UniRx `Subject<T>` streams for decoupled messaging (e.g., `OnPlayerDeath`, `OnLevelUp`).
+
+## 2. Reactive Programming (R3 / UniRx)
+Reactive programming is used to handle data streams, timers, and asynchronous events cleanly, eliminating messy [Update()](file:///e:/Github/WaterJumper/Assets/_Scripts/PooledObject.cs#21-30) checks and Coroutines. R3 is recommended (the modern successor to UniRx) for maximum performance.
+
+*   **Data Binding (Stat Tracking):**
+    *   Instead of the UI polling the Player's health every frame, the [Player.cs](file:///e:/Github/WaterJumper/Assets/_Scripts/Player.cs) exposes a `ReactiveProperty<int> Health`.
+    *   The `HealthUI.cs` subscribes to this: `player.Health.Subscribe(hp => UpdateHearts(hp)).AddTo(this);`
+*   **The GameSpeed Engine (The Universal Scalar):**
+    *   Instead of `GameManager.Instance.GameSpeed`, the architecture uses a ScriptableObject container: `GameLoopData.GameSpeed` (a `ReactiveProperty<float>`).
+    *   Every translating object (Enemy, Collectible, Background parallax) subscribes to this value. 
+    *   When an ability triggers "Slow-Mo", the ScriptableObject's value is changed to `0.5f`. All subscribed objects instantly and cleanly adjust their velocity multiplier, decoupling pauses and slow-motion from Unity's `Time.timeScale`.
+
+## 3. Physics Execution (The Core Hook)
+The "instant-dive" vs "buoyancy rise" must feel snappy.
+*   **The Rise:** Handled organically by Unity's `BuoyancyEffector2D` on the Water volume. The Player's `Rigidbody2D` is pushed upwards when no input is detected.
+*   **The Dive (Code Logic):**
+    ```csharp
+    // Inside Update/FixedUpdate based on Input.GetMouseButton
+    // Instead of just adding force, we MUST override the upward velocity 
+    // to instantly snap the player downwards for tight dodging.
+    rb.linearVelocity = new Vector2(rb.linearVelocity.x, -holdDownForce * Time.fixedDeltaTime); 
+    ```
+
+## 4. The Spawner Rewrite (Wave Generation)
+Relying on `InvokeRepeating` to spawn 1 random enemy is insufficient for a Survivor/Horde game. 
+*   **The Technical Shift:** Use **Scriptable Objects** or **Wave Arrays** to spawn *formations/patterns*.
+*   Instead of random single blips, the Spawner calls `ObjectPooler.SpawnFromPool()` in a `foreach` loop, spawning a V-Formation of 5 enemies simultaneously with a guaranteed safe gap in the middle.
+*   **UniRx Timer:** Instead of `InvokeRepeating`, use R3/UniRx timers for wave management:
+    ```csharp
+    Observable.Timer(TimeSpan.FromSeconds(0), TimeSpan.FromSeconds(waveData.Interval))
+        .Where(_ => currentWaveConfig != null)
+        .Subscribe(_ => SpawnFormation(currentWaveConfig))
+        .AddTo(this);
+    ```
+
+## 5. Weapon Logic & Targeting (2D Constraints)
+Because enemies only approach from the right and despawn on the left, 360-degree homing logic is a waste of processing power.
+*   **Targeting Script:** Weapons like the Archerfish should ONLY query enemies with an X-position *greater* than the Player's X-position.
+*   **AoE Hitboxes:** The Electric Eel uses a `CircleCollider2D (IsTrigger)` overlapping the player. `OnTriggerStay2D` checks for the "Enemy" tag and applies damage logic via an R3 throttle to prevent multi-hit bugs.

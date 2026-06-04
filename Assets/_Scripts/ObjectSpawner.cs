@@ -20,11 +20,6 @@ public class ObjectSpawner : MonoBehaviour
         InvokeRepeating("Spawn", spawnRate, spawnRate);
     }
     
-    void FixedUpdate()
-    {
-    //    objectPooler.SpawnFromPool("Enemy", transform.position, Quaternion.identity);
-    }
-
     void Spawn(){
         int r = Random.Range(0, ObjectTags.Count);
         // Debug.Log(r);
@@ -55,13 +50,5 @@ public class ObjectSpawner : MonoBehaviour
         // Debug.Log(randomVec3);
 
         return randomVec3;
-    }
-
-    IEnumerator Spawner(){
-        WaitForSeconds wait = new WaitForSeconds(spawnRate);
-        while(canSpawn){
-            yield return wait;
-            Spawn();
-        }
     }
 }
